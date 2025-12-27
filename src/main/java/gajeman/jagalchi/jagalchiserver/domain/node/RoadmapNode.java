@@ -57,4 +57,22 @@ public class RoadmapNode {
     protected void onUpdate() {
         this.updatedAt = LocalDateTime.now();
     }
+
+    public void move(Float x, Float y) {
+        this.x = x;
+        this.y = y;
+    }
+
+    public void updateLabel(String label) {
+        this.label = label;
+    }
+
+    public void updateData(Map<String, Object> data) {
+        this.data = data;
+    }
+
+    public void resize(Float x, Float y) {
+        this.x = x;
+        this.y = y;
+    }
 }
