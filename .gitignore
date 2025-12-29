@@ -35,3 +35,7 @@ out/
 
 ### VS Code ###
 .vscode/
+
+### AI Agents용 ㅎㅎ ###
+/AGENTS.md
+/erd.txt
