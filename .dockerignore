@@ -1,0 +1,60 @@
+# Build artifacts
+build/
+.gradle/
+bin/
+out/
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Test results
+build/test-results/
+build/reports/
+
+# Git
+.git/
+.gitignore
+
+# Docker
+docker-compose*.yml
+Dockerfile*
+.dockerignore
+
+# Documentation
+*.md
+docs/
+
+# Local environment
+.env
+.env.local
+*.env
+-- Jagalchi Node Database Initialization
+
+-- 기본 문자셋 설정
+SET NAMES utf8mb4;
+SET CHARACTER SET utf8mb4;
+
+-- 데이터베이스가 없으면 생성 (docker-compose에서 이미 생성되지만 안전을 위해)
+CREATE DATABASE IF NOT EXISTS jagalchi_node
+    CHARACTER SET utf8mb4
+    COLLATE utf8mb4_unicode_ci;
+
+USE jagalchi_node;
+
+-- 추가 초기화 쿼리가 필요하면 여기에 작성
+-- 예: 초기 데이터 삽입, 인덱스 생성 등
+
