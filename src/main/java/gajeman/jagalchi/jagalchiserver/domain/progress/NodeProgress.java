@@ -58,5 +58,18 @@ public class NodeProgress {
     public static class NodeProgressId implements Serializable {
         private Long userId;
         private Long nodeId;
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            NodeProgressId that = (NodeProgressId) o;
+            return java.util.Objects.equals(userId, that.userId) && java.util.Objects.equals(nodeId, that.nodeId);
+        }
+
+        @Override
+        public int hashCode() {
+            return java.util.Objects.hash(userId, nodeId);
+        }
     }
 }
