@@ -2,7 +2,7 @@ package gajeman.jagalchi.jagalchiserver.infrastructure.auth;
 
 import gajeman.jagalchi.jagalchiserver.domain.auth.ActionContext;
 import gajeman.jagalchi.jagalchiserver.domain.auth.UserRole;
-import gajeman.jagalchi.jagalchiserver.global.exception.CustomException;
+import gajeman.jagalchi.jagalchiserver.global.exception.EditorException;
 import gajeman.jagalchi.jagalchiserver.global.exception.ErrorCode;
 import org.springframework.stereotype.Component;
 
@@ -36,7 +36,7 @@ public class ActionContextExtractor {
             UserRole parsedRole = UserRole.from(userRole);
             return ActionContext.of(parsedUserId, parsedRole);
         } catch (NumberFormatException e) {
-            throw new CustomException(ErrorCode.INVALID_USER_ID);
+            throw new EditorException(ErrorCode.INVALID_USER_ID);
         }
     }
 

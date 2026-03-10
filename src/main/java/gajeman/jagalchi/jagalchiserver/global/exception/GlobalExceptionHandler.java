@@ -7,8 +7,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(CustomException.class)
-    public ResponseEntity<ErrorResponse> handleCustomException(CustomException exception) {
+    @ExceptionHandler(EditorException.class)
+    public ResponseEntity<ErrorResponse> handleCustomException(EditorException exception) {
         ErrorCode errorCode = exception.getErrorCode();
         ErrorResponse response = ErrorResponse.from(errorCode);
         return ResponseEntity

@@ -29,7 +29,7 @@ public class HeaderBasedPermissionValidator implements PermissionValidator {
         }
 
         // ADMIN은 모든 로드맵 편집 가능
-        if (context.getRole() == UserRole.ADMIN) {
+        if (context.getUserRole() == UserRole.ADMIN) {
             return true;
         }
 
@@ -37,7 +37,7 @@ public class HeaderBasedPermissionValidator implements PermissionValidator {
         // TODO: 실제 소유자/협업자 확인 로직 추가
         // TODO: gRPC로 Permission 서비스 호출하여 roadmapId 소유자 확인
         // 예시: permissionServiceClient.checkPermission(context.getUserId(), roadmapId, "EDIT")
-        return context.getRole() == UserRole.USER;
+        return context.getUserRole() == UserRole.USER;
     }
 
     @Override

@@ -1,0 +1,109 @@
+///////////////////////////////////////////////////////
+// Jagalchi Node Service ERD (MySQL / BIGINT PK / ENUM 사용)
+// - MSA 구조: 로드맵 노드 관련 기능만 담당
+// - 유저, 조직, 로드맵 메타 등은 다른 서비스에서 관리
+// - 외부 서비스의 ID만 참조 (FK 없음)
+///////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////
+// ENUM
+///////////////////////////////////////////////////////
+
+Enum progress_status {
+NOT_STARTED // 아직 시작 안함
+IN_PROGRESS // 진행 중
+DONE        // 완료
+}
+
+Enum comment_ref_type {
+ROADMAP_NODE // roadmap_nodes.id 대상 댓글(노드 단위 댓글)
+}
+
+///////////////////////////////////////////////////////
+// ROADMAP NODES: 로드맵 보드의 노드
+// - 프론트(React Flow 등)에서 사용하는 좌표/데이터를 저장
+// - unit_id는 외부 로드맵 서비스의 unit ID를 참조
+///////////////////////////////////////////////////////
+
+Table roadmap_nodes {
+id bigint [pk, note: '보드 노드 PK. 진도(node_progress)와 댓글(comments)의 참조 키.']
+unit_id bigint [not null, note: '외부 로드맵 서비스의 ROADMAP unit ID. FK 없음(MSA).']
+label varchar [not null, note: '노드 제목/라벨(카드에 표시되는 텍스트).']
+x float [not null, note: '캔버스 X 좌표(프론트 레이아웃 저장용).']
+y float [not null, note: '캔버스 Y 좌표(프론트 레이아웃 저장용).']
+data json [note: '노드 추가 메타(링크, 난이도, 태그, 리소스 URL, 썸네일 등). 스키마는 프론트/백엔드 합의로 관리.']
+
+created_at timestamp [note: '노드 생성 시각.']
+updated_at timestamp [note: '노드 수정(라벨/메타/좌표) 시각.']
+
+indexes {
+(unit_id) [note: '로드맵 보드 로딩 시 unit_id로 노드 전체 조회를 빠르게 하기 위한 인덱스.']
+}
+}
+
+///////////////////////////////////////////////////////
+// ROADMAP EDGES: 로드맵 보드의 연결선
+// - 노드 간 관계를 표현
+///////////////////////////////////////////////////////
+
+Table roadmap_edges {
+id bigint [pk, note: '보드 엣지(연결선) PK.']
+unit_id bigint [not null, note: '외부 로드맵 서비스의 ROADMAP unit ID. FK 없음(MSA).']
+from_node_id bigint [not null, note: '시작 노드 ID. roadmap_nodes.id 참조.']
+to_node_id bigint [not null, note: '도착 노드 ID. roadmap_nodes.id 참조.']
+label varchar [note: '연결선 라벨(예: 선행 조건, 추천 순서 등). 필요 없으면 NULL.']
+
+created_at timestamp [note: '엣지 생성 시각.']
+updated_at timestamp [note: '엣지 수정 시각.']
+
+indexes {
+(unit_id) [note: '보드 로딩 시 unit_id로 엣지 전체 조회 최적화.']
+(unit_id, from_node_id, to_node_id) [note: '중복 연결 방지/탐지용. 정책에 따라 UNIQUE로 강화 가능.']
+(from_node_id) [note: '특정 노드에서 나가는 엣지 조회 최적화.']
+(to_node_id) [note: '특정 노드로 들어오는 엣지 조회 최적화.']
+}
+}
+
+///////////////////////////////////////////////////////
+// NODE PROGRESS: 노드 단위 학습 진도(사용자별)
+// - "노드 완료/진행률" 기능 구현의 핵심
+// - user_id는 외부 유저 서비스의 user ID를 참조
+///////////////////////////////////////////////////////
+
+Table node_progress {
+user_id bigint [not null, note: '외부 유저 서비스의 user ID. FK 없음(MSA).']
+node_id bigint [not null, note: '진도 대상 노드. roadmap_nodes.id 참조.']
+status progress_status [not null, note: 'NOT_STARTED/IN_PROGRESS/DONE 상태.']
+updated_at timestamp [not null, note: '마지막 상태 변경 시각. (DONE 처리 시점 등)']
+
+indexes {
+(user_id, node_id) [pk, note: '유저-노드당 1개의 진도만 유지(상태 갱신).']
+(node_id, status) [note: '노드별 완료율 집계/통계 계산 최적화.']
+(user_id, status) [note: '유저별 진행 상태 조회 최적화.']
+}
+}
+
+///////////////////////////////////////////////////////
+// COMMENTS: 노드 댓글
+// - 노드에 대한 댓글/피드백 기능
+// - author_user_id는 외부 유저 서비스의 user ID를 참조
+///////////////////////////////////////////////////////
+
+Table comments {
+id bigint [pk, note: '댓글 PK. 대댓글을 하려면 parent_comment_id 같은 컬럼을 추가하면 됨.']
+author_user_id bigint [not null, note: '외부 유저 서비스의 user ID. FK 없음(MSA).']
+
+ref_type comment_ref_type [not null, note: '댓글이 달린 대상 타입(ROADMAP_NODE만 사용).']
+ref_id bigint [not null, note: '댓글이 달린 노드의 PK. roadmap_nodes.id 참조.']
+
+content text [not null, note: '댓글 본문. 욕설/스팸 필터링은 애플리케이션 레벨에서 처리.']
+
+created_at timestamp [note: '댓글 작성 시각.']
+updated_at timestamp [note: '댓글 수정 시각. 수정 불가 정책이면 제거 가능.']
+
+indexes {
+(ref_type, ref_id) [note: '노드별 댓글 리스트를 빠르게 조회하기 위한 인덱스.']
+(author_user_id) [note: '작성자별 댓글 조회 최적화.']
+(ref_id, created_at) [note: '노드별 댓글 시간순 조회 최적화.']
+}
+}

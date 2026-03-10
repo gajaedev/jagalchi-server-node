@@ -11,28 +11,31 @@ import lombok.Getter;
 @Builder
 public class ActionContext {
     private final Long userId;
-    private final UserRole role;
+    private final UserRole userRole;
 
-    public static ActionContext of(Long userId, UserRole role) {
+    public static ActionContext of(
+            Long userId,
+            UserRole userRole
+    ) {
         return ActionContext.builder()
                 .userId(userId)
-                .role(role)
+                .userRole(userRole)
                 .build();
     }
 
     public static ActionContext guest() {
         return ActionContext.builder()
                 .userId(null)
-                .role(UserRole.GUEST)
+                .userRole(UserRole.GUEST)
                 .build();
     }
 
     public boolean isAuthenticated() {
-        return userId != null && role != UserRole.GUEST;
+        return userId != null && userRole != UserRole.GUEST;
     }
 
     public boolean canEdit() {
-        return isAuthenticated() && role.canEdit();
+        return isAuthenticated() && userRole.canEdit();
     }
 }
 

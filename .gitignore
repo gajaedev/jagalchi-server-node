@@ -36,11 +36,8 @@ out/
 ### VS Code ###
 .vscode/
 
-### AI Agents용 ㅎㅎ ###
-/AGENTS.md
-/erd.txt
-/HISTORY.md
-/logic.md
+/docs
+/agents
 
 ### env ###
 .env
