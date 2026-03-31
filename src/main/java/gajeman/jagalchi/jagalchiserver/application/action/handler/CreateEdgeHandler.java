@@ -84,7 +84,7 @@ public class CreateEdgeHandler implements ActionHandler {
         }
 
         // 중복 간선 검증
-        Optional<RoadmapEdge> existingEdge = roadmapEdgeRepository.findExistingEdge(
+        Optional<RoadmapEdge> existingEdge = roadmapEdgeRepository.findByUnitIdAndFromNodeIdAndToNodeId(
                 unitId,
                 fromNodeId,
                 toNodeId

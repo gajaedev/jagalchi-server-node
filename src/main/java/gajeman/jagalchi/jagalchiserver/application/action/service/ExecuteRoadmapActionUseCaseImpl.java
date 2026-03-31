@@ -1,6 +1,7 @@
 package gajeman.jagalchi.jagalchiserver.application.action.service;
 
 import gajeman.jagalchi.jagalchiserver.application.action.dispatcher.ActionDispatcher;
+import gajeman.jagalchi.jagalchiserver.application.action.filter.ActivityTypeFilter;
 import gajeman.jagalchi.jagalchiserver.application.action.usecase.ExecuteRoadmapActionUseCase;
 import gajeman.jagalchi.jagalchiserver.domain.action.Action;
 import gajeman.jagalchi.jagalchiserver.domain.action.ActionAck;
@@ -8,12 +9,14 @@ import gajeman.jagalchi.jagalchiserver.domain.auth.ActionContext;
 import gajeman.jagalchi.jagalchiserver.domain.auth.UserRole;
 import gajeman.jagalchi.jagalchiserver.domain.event.Event;
 import gajeman.jagalchi.jagalchiserver.domain.history.ActionHistory;
+import gajeman.jagalchi.jagalchiserver.infrastructure.messaging.ActivityEventPublisher;
 import gajeman.jagalchi.jagalchiserver.infrastructure.persistence.ActionHistoryRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.Map;
 
 /**
@@ -28,6 +31,8 @@ public class ExecuteRoadmapActionUseCaseImpl implements ExecuteRoadmapActionUseC
     private final ActionDispatcher actionDispatcher;
     private final SimpMessagingTemplate messagingTemplate;
     private final ActionHistoryRepository actionHistoryRepository;
+    private final ActivityEventPublisher activityEventPublisher;
+    private final gajeman.jagalchi.jagalchiserver.application.auth.PermissionValidator permissionValidator;
 
     /**
      * 액션 실행
@@ -54,6 +59,18 @@ public class ExecuteRoadmapActionUseCaseImpl implements ExecuteRoadmapActionUseC
         log.info("Executing action: actionId={}, roadmapId={}, userId={}, actionType={}",
                 action.getActionId(), roadmapId, userId, action.getAction());
 
+        // 권한 확인: 현재 사용자가 해당 로드맵을 편집할 수 있는지 확인
+        Long roadmapIdLong = null;
+        try {
+            roadmapIdLong = roadmapId != null ? roadmapId : (action.getRoadmap() != null ? Long.parseLong(action.getRoadmap()) : null);
+        } catch (NumberFormatException e) {
+            throw new gajeman.jagalchi.jagalchiserver.global.exception.ActionValidationException("INVALID_ROADMAP_ID", "로드맵 ID가 유효하지 않습니다");
+        }
+
+        if (roadmapIdLong == null || !permissionValidator.canEditRoadmap(context, roadmapIdLong)) {
+            throw new gajeman.jagalchi.jagalchiserver.global.exception.ActionValidationException("UNAUTHORIZED", "로드맵 편집 권한이 없습니다");
+        }
+
         // 2. ActionDispatcher를 통해 처리
         Event event = actionDispatcher.dispatch(action, context);
 
@@ -66,7 +83,17 @@ public class ExecuteRoadmapActionUseCaseImpl implements ExecuteRoadmapActionUseC
 
         log.info("Event broadcasted: eventId={}, topic={}", event.getEventId(), stateTopic);
 
-        // 5. ACK 생성 및 반환 (Controller에서 요청자에게 전송)
+        // 5. ActivityEvent 발행 (사용자 활동 streak 업데이트)
+        if (userId != null && ActivityTypeFilter.shouldRecordActivity(action)) {
+            try {
+                Long userIdLong = Long.parseLong(userId);
+                activityEventPublisher.publishActivityEvent(userIdLong, LocalDate.now());
+            } catch (NumberFormatException e) {
+                log.warn("Invalid userId format for ActivityEvent: {}", userId);
+            }
+        }
+
+        // 6. ACK 생성 및 반환 (Controller에서 요청자에게 전송)
         return ActionAck.from(action.getActionId(), "ACCEPTED");
     }
 
