@@ -42,14 +42,14 @@ public class RoadmapActionController {
      * 3. EVENT 브로드캐스트 (UseCase 내부에서 처리)
      *
      * 헤더:
-     * - X-User-Id: 사용자 ID
+     * - X-User-ID: 사용자 ID (API Gateway에서 주입)
      * - X-User-Role: 사용자 역할 (ADMIN, USER, GUEST)
      */
     @MessageMapping("/roadmap/{roadmapId}/action")
     public void handleAction(
             @DestinationVariable Long roadmapId,
-            @Header(value = "X-User-Id", required = false) String userId,
-            @Header(value = "X-User-Role", required = false) String userRole,
+            @Header(value = "X-User-ID", required = true) String userId,
+            @Header(value = "X-User-Role", required = true) String userRole,
             Action action,
             SimpMessageHeaderAccessor headerAccessor
     ) {

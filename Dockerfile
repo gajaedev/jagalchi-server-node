@@ -26,6 +26,10 @@ FROM eclipse-temurin:25-jre
 
 WORKDIR /app
 
+# Install curl for healthcheck
+RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
 # 빌드된 JAR 복사
 COPY --from=builder /app/build/libs/*.jar app.jar
 

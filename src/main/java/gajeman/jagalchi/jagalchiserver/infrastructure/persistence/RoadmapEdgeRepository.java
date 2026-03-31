@@ -36,23 +36,22 @@ public interface RoadmapEdgeRepository extends JpaRepository<RoadmapEdge, Long> 
     /**
      * 특정 노드에서 출발하는 모든 간선 조회
      */
-    List<RoadmapEdge> findOutgoingEdges(
+    // Outgoing edges: nodes where this node is the 'from'
+    List<RoadmapEdge> findByUnitIdAndFromNodeId(
             Long unitId,
-            Long nodeId
+            Long fromNodeId
     );
 
-    /**
-     * 특정 노드로 들어오는 모든 간선 조회
-     */
-    List<RoadmapEdge> findIncomingEdges(
+    // Incoming edges: nodes where this node is the 'to'
+    List<RoadmapEdge> findByUnitIdAndToNodeId(
             Long unitId,
-            Long nodeId
+            Long toNodeId
     );
 
     /**
      * 두 노드 사이의 간선 존재 여부 확인 (중복 검사용)
      */
-    Optional<RoadmapEdge> findExistingEdge(
+    Optional<RoadmapEdge> findByUnitIdAndFromNodeIdAndToNodeId(
             Long unitId,
             Long fromNodeId,
             Long toNodeId
@@ -61,9 +60,9 @@ public interface RoadmapEdgeRepository extends JpaRepository<RoadmapEdge, Long> 
     /**
      * 특정 로드맵에서 연결된 모든 노드 ID 조회
      * 고아 노드 검출용: 간선이 있는 모든 노드 ID를 반환
-     * QueryDSL로 구현 필요
      */
-    List<Long> findAllConnectedNodeIds(
-            Long unitId
+    @org.springframework.data.jpa.repository.Query(value = "SELECT DISTINCT node_id FROM (SELECT from_node_id as node_id FROM roadmap_edges WHERE unit_id = :unitId UNION SELECT to_node_id as node_id FROM roadmap_edges WHERE unit_id = :unitId) t", nativeQuery = true)
+    java.util.List<java.lang.Long> findAllConnectedNodeIds(
+            @org.springframework.data.repository.query.Param("unitId") Long unitId
     );
 }

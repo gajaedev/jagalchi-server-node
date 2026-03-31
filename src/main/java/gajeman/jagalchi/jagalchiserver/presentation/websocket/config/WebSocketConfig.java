@@ -17,7 +17,7 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
  * - Message Broker 설정
  * - Endpoint 등록
  */
-@Configuration
+@Configuration("presentationWebSocketConfig")
 @EnableWebSocketMessageBroker
 @RequiredArgsConstructor
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {

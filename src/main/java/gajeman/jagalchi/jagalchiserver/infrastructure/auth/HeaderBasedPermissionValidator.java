@@ -4,6 +4,7 @@ import gajeman.jagalchi.jagalchiserver.application.auth.PermissionValidator;
 import gajeman.jagalchi.jagalchiserver.domain.auth.ActionContext;
 import gajeman.jagalchi.jagalchiserver.domain.auth.UserRole;
 import org.springframework.stereotype.Component;
+import lombok.RequiredArgsConstructor;
 
 /**
  * 헤더 기반 권한 검증 구현체
@@ -20,11 +21,19 @@ import org.springframework.stereotype.Component;
  * - 권한 결과 로컬 캐시 (TTL 5분)
  */
 @Component
+@RequiredArgsConstructor
 public class HeaderBasedPermissionValidator implements PermissionValidator {
+
+    private final gajeman.jagalchi.jagalchiserver.infrastructure.remote.RoadmapExistenceClient roadmapExistenceClient;
 
     @Override
     public boolean canEditRoadmap(ActionContext context, Long roadmapId) {
         if (!context.isAuthenticated()) {
+            return false;
+        }
+
+        // 로드맵 존재 여부 확인 (외부 서비스가 설정되어 있으면 확인)
+        if (roadmapId != null && !roadmapExistenceClient.exists(roadmapId)) {
             return false;
         }
 
@@ -42,6 +51,14 @@ public class HeaderBasedPermissionValidator implements PermissionValidator {
 
     @Override
     public boolean canViewRoadmap(ActionContext context, Long roadmapId) {
+        if (!context.isAuthenticated()) {
+            return false;
+        }
+
+        if (roadmapId != null && !roadmapExistenceClient.exists(roadmapId)) {
+            return false;
+        }
+
         // 모든 인증된 사용자는 조회 가능
         // TODO: 비공개 로드맵 처리 로직 추가
         return context.isAuthenticated();

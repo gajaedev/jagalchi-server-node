@@ -41,3 +41,11 @@ out/
 
 ### env ###
 .env
+
+# Local test scripts and node client (should not be committed)
+node_modules/
+tmp_send.js
+npm-debug.log*
+package-lock.json
+yarn.lock
+
