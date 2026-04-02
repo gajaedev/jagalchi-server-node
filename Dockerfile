@@ -42,7 +42,7 @@ ENV SPRING_PROFILES_ACTIVE=prod
 
 # 헬스체크
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
-    CMD curl -f http://localhost:8080/actuator/health || exit 1
+    CMD curl -f http://gateway.jagalchi.local:8080/actuator/health || exit 1
 
 # 애플리케이션 실행
 ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]
